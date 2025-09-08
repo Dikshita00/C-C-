@@ -1,0 +1,251 @@
+ Problem Statement 2: "Student Gradebook & Analytics System"
+🎯 Objective:
+Build a C++ application to manage student records, calculate grades, and store data securely.
+
+📌 Requirements:
+1. OOP Design
+Class Student with:
+
+rollNo, name, marks in 3 subjects
+
+Class Gradebook to manage multiple students
+
+2. Operator Overloading
+Overload ++ to increment marks (e.g., bonus marks)
+
+Overload > to compare students based on average marks
+
+3. Exception Handling
+Throw exceptions for:
+
+Invalid marks (e.g., >100 or <0)
+
+Duplicate roll numbers
+
+Empty gradebook access
+
+4. File Handling
+Save student records to gradebook.txt
+
+Load records at startup
+
+Allow search by roll number and update marks
+**PROGRAM**
+#include<fstream>
+#include<string>
+#include<iostream>
+using namespace std;
+
+const int max_student=100;
+class Student
+{
+    public:
+    int rollno;
+    string name;
+    int marks[3];
+
+    Student()
+    {
+        rollno=-1;
+        name=" ";
+        marks[0]=marks[1]=marks[2]=0;
+    }
+
+    void setData(int r,string n, int m1,int m2,int m3)
+    {
+        if(m1<0 || m1>100 || m2 <0 || m2>100 || m3 <0 || m3>100 )
+        throw "invalid marks";
+        rollno=r;
+        name= n;
+        marks[0]=m1;
+        marks[1]=m2;
+        marks[2]=m3;
+    }
+
+    float avg() const
+    {
+        return (marks[0]+marks[1]+marks[2])/3;
+    }
+    void displayData() const
+    {
+        cout<<"Roll No of Student : "<<rollno<<endl;
+        cout<<"Name of student :"<<name<<endl;
+        cout<<"marks of student :"<<marks[0]<<marks[1]<<marks[2]<<endl;
+
+    }
+
+    void operator++()
+    {
+        for(int i=0;i<3;i++)
+        {
+            if(marks[i]<100)
+            marks[i]++;
+        }
+    } 
+
+    bool operator>(const Student& other) const
+    {
+        return  this->avg()> other.avg();
+    }
+
+} ;
+
+class GradeBook
+{
+    public:
+    Student student [max_student];
+    int count;
+
+    GradeBook()
+    {
+        count = 0;
+    }
+
+    void addStudent(Student s)
+    {
+        for(int i=0;i<count;i++)
+        {
+            if(student[i].rollno == s.rollno)
+            throw "Duplicate rollno !!";
+        }
+        if(count>=max_student)
+        
+            throw "GradeBook is full";
+            student[count++]=s;
+    }
+
+    void displayAll()
+    {
+        if(count==0)
+        throw "GreadBook is empty :";
+        for(int i=0;i<count;i++)
+        {
+            student[i].displayData();
+        }
+    }
+
+    Student* search(int roll)
+    {
+        for(int i=0;i<count;i++)
+        {
+            if(student[i].rollno==roll)
+            return &student[i];
+        }
+        return nullptr;
+    }
+
+    void saveFile()
+    {
+        ofstream out("gradebook.txt");
+        for(int i=0;i<count ;i++)
+        {
+            out << student[i].rollno<<" " ;
+            out<< student[i].name <<" ";
+            out<< student[i].marks[0]<<" ";
+            out<< student[i].marks[1]<<" ";
+            out<< student[i].marks[2]<<" "<<endl;
+            
+        }
+        out.close();
+    }
+
+    void loadFile()
+{
+    ifstream in("gradebook.txt"); //  Use correct filename
+    if (!in) return;
+
+    while (true) {
+        int r, m1, m2, m3;
+        string n;
+
+        if (!(in >> r)) break; // Roll number
+        in.ignore(); // To consume leftover newline
+
+        if (!getline(in, n)) break; // Name
+
+        if (!(in >> m1)) break;
+        if (!(in >> m2)) break;
+        if (!(in >> m3)) break;
+        in.ignore(); // Consume newline after last mark
+
+        Student s;
+        try {
+            s.setData(r, n, m1, m2, m3);
+            addStudent(s);
+        } catch (...) {
+            continue; // Skip invalid or duplicate entries
+        }
+    }
+
+    in.close();
+}
+
+/*
+     void loadFile()
+    {
+        ifstream in("greadbook.txt");
+        if(!in) return;
+        string line;
+        while (getline(in, line)) {
+            int r, m1, m2, m3;
+            string n;
+            size_t pos1 = line.find(',');
+            r = stoi(line.substr(0, pos1));
+            size_t pos2 = line.find(',', pos1 + 1);
+            n = line.substr(pos1 + 1, pos2 - pos1 - 1);
+            size_t pos3 = line.find(',', pos2 + 1);
+            m1 = stoi(line.substr(pos2 + 1, pos3 - pos2 - 1));
+            size_t pos4 = line.find(',', pos3 + 1);
+            m2 = stoi(line.substr(pos3 + 1, pos4 - pos3 - 1));
+            m3 = stoi(line.substr(pos4 + 1));
+
+            Student s;
+            try {
+                s.setData(r, n, m1, m2, m3);
+                addStudent(s);
+            } catch (...) {
+                continue; // Skip invalid or duplicate entries
+            }
+        }
+        in.close();
+    }
+
+*/
+   
+
+};
+int main()
+{
+        GradeBook gb;
+        gb.loadFile();
+
+        try
+        {
+             Student s1,s2,s3;
+             s1.setData(107,"dikshita",90,80,89);
+             s2.setData(108,"disha",90,85,78);
+             s3.setData(109,"shubh",67,98,70);
+
+             gb.addStudent(s1);
+             gb.addStudent(s2);
+             gb.addStudent(s3);
+
+             ++s1;
+             gb.displayAll();
+
+             Student* found = gb.search(102);
+             if(found)
+             {
+                found->setData(101,"disha",98,78,89);
+             }
+                gb.saveFile();
+        }
+        catch(const char* msg)
+        {
+            cout<<"ERROR!!"<<msg<<endl;
+        }
+        return 0;
+        
+       
+
+}
